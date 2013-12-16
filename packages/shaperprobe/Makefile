@@ -25,6 +25,7 @@ define Package/shaperprobe
 	CATEGORY:=Network
 	TITLE:=Bandwidth estimation tool
 	URL:=http://www.measurementlab.net/tools/shaperprobe
+	DEPENDS:=+libpcap
 endef
 
 define Package/shaperprobe/description
