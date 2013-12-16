@@ -35,9 +35,9 @@ define Build/Configure
   $(call Build/Configure/Default,--disable-shared --disable-static)
 endef
 
-define Build/Configure
-	--disable-shared
-ended
+#define Build/Configure
+#	--disable-shared
+#ended
 
 define Package/iperf3/install
 	$(INSTALL_DIR) $(1)/usr/bin
