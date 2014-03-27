@@ -15,7 +15,7 @@ You may obtain a copy of the License at
 --[[
 bismark.active module for fathom rpc
 Authors: saru sgrover@gatech.edu
-last-edit: 9/5/2013
+         akp  anna-kaisa.pietilainen@inria.fr
 ]]--
 
 local io     = require "io"
@@ -55,15 +55,40 @@ exec = luci.util.exec
 active = {}
 
 --[[
-    SIMPLE COMMANDS: ping, alive, arp
+    SIMPLE COMMANDS: ping, alive, arp, ip
 ]]--
-function active.pingtest(host, count)
-    return luci.util.exec("ping -c"..count.." '"..host:gsub("'", '').."'")
+function active.ping(host, count)
+   if not host then
+      return nil, {code=-32602, message="Missing destination"}
+   else
+      return luci.util.exec("ping".. check_param(count, "-c") .. "'"..host:gsub("'", '').."'")
+   end
 end
 
+function active.fping(host, count, interval)
+   if not host then
+      return nil, {code=-32602, message="Missing destination"}
+   else
+      return luci.util.exec("fping" .. check_param(count, "-C") .. check_param(interval, "-p") .. "'"..host:gsub("'", '').."'")
+   end
+end
+
+-- return 0 if successful (alive) else 256/256 = 1
 function active.alive(host)
-    -- return 0 if successful (alive) else 256/256 = 1
-    return os.execute("ping -c1 -W1 '"..host:gsub("'", '').."' >/dev/null 2>&1") / 256
+   if not host then
+      return nil, {code=-32602, message="Missing destination"}
+   else
+      return os.execute("ping -c1 -W1 '"..host:gsub("'", '').."' >/dev/null 2>&1") / 256
+   end
+end
+
+-- arg is an optional cmd line param
+function active.ip(cmd, arg)
+   if not cmd then
+      return nil, {code=-32602, message="Missing ip command"}
+   else
+      return luci.util.exec("ip" .. check_param(arg) .. cmd)
+   end
 end
 
 -- from net.arptable in sys.lua
@@ -98,6 +123,7 @@ function active.arptable(callback)
     end
     return arp
 end
+
 
 --[[
     WIRELESS INFO
@@ -313,14 +339,29 @@ end
 --[[
     PARIS TRACEROUTE
 ]]--
-function active.paristraceroute(ip_addr, proto)
-    local options = ""
-    options = options .. check_param(proto, "-p")
-
-    local ret = luci.util.exec("paris-traceroute"..options.." "..ip_addr)
-    
-    return ret
+function active.paristraceroute(ip_addr, count, proto)
+   if not ip_addr then
+      return nil, {code=-32600, message="Missing destination"}
+   else
+      local options = "" .. check_param(count, "-q") .. check_param(proto, "-p")
+      local ret = luci.util.exec("paris-traceroute"..options..ip_addr)
+      return ret
+   end
 end
+
+function active.mtr(ip_addr, count, size, interval, proto)
+   if not ip_addr then
+      return nil, {code=-32600, message="Missing destination"}
+   else
+      local options = " --raw" .. check_param(count, "-c") .. check_param(size, "-s") .. check_param(interval, "-i")
+      if (proto == 'udp') then
+	 options = options .. " -u "
+      end
+      local ret = luci.util.exec("mtr"..options..ip_addr)
+      return ret
+   end
+end
+
 
 --[[
     CONNTRACK
@@ -429,12 +470,15 @@ function _parse_mixed_record(cnt, delimiter)
 end
 
 -- checks options and creates an option string to call commands on router
-function check_param(attrib, option_string, options)
-    
-    if attrib and (attrib ~= 0) then
-        return " " .. option_string .. " " .. attrib
-    end
-    return ""
+function check_param(attrib, option_string)
+   if attrib and (attrib ~= 0) then
+      if option_string then
+	 return " " .. option_string .. " " .. attrib .. " "
+      else
+	 return " " .. attrib .. " "
+      end
+   end
+   return " "
 end
 
 function SOS(command_string, description)
