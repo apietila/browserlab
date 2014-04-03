@@ -57,6 +57,10 @@ active = {}
 --[[
     SIMPLE COMMANDS: ping, alive, arp, ip
 ]]--
+function active.heartbeat(ts)
+   return "{tsecho:" .. ts .. ",ts:" .. os.time()*1000 .. "}"
+end
+
 function active.ping(host, count)
    if not host then
       return nil, {code=-32602, message="Missing destination"}
@@ -82,14 +86,16 @@ function active.alive(host)
    end
 end
 
--- arg is an optional cmd line param
-function active.ip(cmd, arg)
-   if not cmd then
-      return nil, {code=-32602, message="Missing ip command"}
-   else
-      return luci.util.exec("ip" .. check_param(arg) .. cmd)
-   end
+function active.ipneigh()
+   return luci.util.exec("ip neigh")
 end
+function active.iplink()
+   return luci.util.exec("ip -o -s link")
+end
+function active.ipaddr()
+   return luci.util.exec("ip -o addr")
+end
+
 
 -- from net.arptable in sys.lua
 function active.arptable(callback)
