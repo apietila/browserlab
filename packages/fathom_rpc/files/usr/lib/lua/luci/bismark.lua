@@ -35,14 +35,18 @@ luci.sys     = require "luci.sys"
 local tonumber, ipairs, pairs, pcall, type, next, setmetatable, require, select =
         tonumber, ipairs, pairs, pcall, type, next, setmetatable, require, select
 
+--- RPC module
 module "luci.bismark"
+-- method namespace
+active = {}
+
 --- Execute a given shell command and return the error code
 -- @class               function
 -- @name                call
 -- @param               ...             Command to call
 -- @return              Error code of the command
 function call(...)
-        return os.execute(...) / 256
+   return os.execute(...) / 256
 end
 
 --- Execute a given shell command and capture its standard output
@@ -52,20 +56,33 @@ end
 -- @return                      String containg the return the output of the command
 exec = luci.util.exec
 
-active = {}
+-- common return format for raw or formatted responses
+function formatres(data, cmd)
+--   return "{hostname:" .. luci.sys.hostname() .. ",ts:" .. os.time()*1000 .. ",data:" .. data .. ",cmd=" .. cmd .. "}"
+   local res = {}
+   res.data = data
+   res.cmd = cmd
+   res.hostname = luci.sys.hostname()
+   res.ts = os.time() -- in sec
+   return res
+end
 
 --[[
     SIMPLE COMMANDS: ping, alive, arp, ip
 ]]--
+
 function active.heartbeat(ts)
-   return "{tsecho:" .. ts .. ",ts:" .. os.time()*1000 .. "}"
+   local res = "{tsecho:" .. ts .. ",ts:" .. os.time()*1000 .. "}"
+   return formatres(res,"os.time")
 end
 
 function active.ping(host, count)
    if not host then
       return nil, {code=-32602, message="Missing destination"}
    else
-      return luci.util.exec("ping".. check_param(count, "-c") .. "'"..host:gsub("'", '').."'")
+      local cmd = "ping".. check_param(count, "-c") .. "'"..host:gsub("'", '').."'"
+      local rawdata = luci.util.exec(cmd)
+      return formatres(rawdata,cmd)
    end
 end
 
@@ -73,7 +90,9 @@ function active.fping(host, count, interval)
    if not host then
       return nil, {code=-32602, message="Missing destination"}
    else
-      return luci.util.exec("fping" .. check_param(count, "-C") .. check_param(interval, "-p") .. "'"..host:gsub("'", '').."'")
+      local cmd = "fping" .. check_param(count, "-C") .. check_param(interval, "-p") .. "'"..host:gsub("'", '').."'"
+      local rawdata luci.util.exec(cmd)
+      return formatres(rawdata,cmd)
    end
 end
 
@@ -82,20 +101,24 @@ function active.alive(host)
    if not host then
       return nil, {code=-32602, message="Missing destination"}
    else
-      return os.execute("ping -c1 -W1 '"..host:gsub("'", '').."' >/dev/null 2>&1") / 256
+      local cmd = "ping -c1 -W1 '"..host:gsub("'", '').."' >/dev/null 2>&1"
+      local rawdata = os.execute(cmd) / 256
+      return formatres(rawdata,cmd)
    end
 end
 
 function active.ipneigh()
-   return luci.util.exec("ip neigh")
+   local cmd = "ip neigh"
+   return formatres(luci.util.exec(cmd),cmd)
 end
 function active.iplink()
-   return luci.util.exec("ip -o -s link")
+   local cmd = "ip -o -s link"
+   return formatres(luci.util.exec(cmd),cmd)
 end
 function active.ipaddr()
-   return luci.util.exec("ip -o addr")
+   local cmd = "ip -o addr"
+   return formatres(luci.util.exec(cmd),cmd)
 end
-
 
 -- from net.arptable in sys.lua
 function active.arptable(callback)
@@ -134,8 +157,42 @@ end
 --[[
     WIRELESS INFO
 ]]--
---XXX make parser
 
+-- wireless devices
+function active.iwdev()
+   local cmd = "iw dev"
+   return formatres(luci.util.exec(cmd),cmd)
+end
+
+-- channel surveys
+function active.iwsurveydump()
+    local survey_dump = ""
+    
+    local wireless_dev = luci.util.exec("iw dev | grep 'Interface'")
+    for _,lines in pairs(wireless_dev:split("\n")) do
+        for intfce in lines:gmatch('Interface%s*(%a.*)') do
+            survey_dump = survey_dump .. "\n".. luci.util.exec("iw dev "..intfce.." survey dump")
+        end
+    end
+    
+    return formatres(survey_dump,"iw dev <dev> survey dump")
+end
+
+-- ap scan
+function active.iwscan()
+    local res = ""
+    
+    local wireless_dev = luci.util.exec("iw dev | grep 'Interface'")
+    for _,lines in pairs(wireless_dev:split("\n")) do
+        for intfce in lines:gmatch('Interface%s*(%a.*)') do
+            res = res .. "\n".. luci.util.exec("iw dev "..intfce.." scan")
+        end
+    end
+    
+    return formatres(res,"iw dev <dev> scan")
+end
+
+-- associated clients
 function active.iwstationdump()
     local station_dump = ""
     
@@ -146,7 +203,7 @@ function active.iwstationdump()
         end
     end
     
-    return station_dump
+    return formatres(station_dump,"iw dev <dev> station dump")
 end
 
 function active._wireless_interface()
@@ -349,22 +406,23 @@ function active.paristraceroute(ip_addr, count, proto)
    if not ip_addr then
       return nil, {code=-32600, message="Missing destination"}
    else
-      local options = "" .. check_param(count, "-q") .. check_param(proto, "-p")
-      local ret = luci.util.exec("paris-traceroute"..options..ip_addr)
-      return ret
+      local cmd = "paris-traceroute " .. check_param(count, "-q") .. check_param(proto, "-p") .. ip_addr
+      local ret = luci.util.exec(cmd)
+      return formatres(ret,cmd)
    end
 end
 
 function active.mtr(ip_addr, count, size, interval, proto)
    if not ip_addr then
       return nil, {code=-32600, message="Missing destination"}
-   else
+   else      
       local options = " --raw" .. check_param(count, "-c") .. check_param(size, "-s") .. check_param(interval, "-i")
       if (proto == 'udp') then
 	 options = options .. " -u "
       end
-      local ret = luci.util.exec("mtr"..options..ip_addr)
-      return ret
+      local cmd = "mtr"..options..ip_addr
+      local ret = luci.util.exec(cmd)
+      return formatres(ret,cmd)
    end
 end
 
