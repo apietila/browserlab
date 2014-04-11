@@ -298,12 +298,44 @@ function active.iperf(opt)
    end
 end
 
+-- start iperf server
+function active.iperfs_start(opt)
+   if not opt or not opt.port then
+      return nil, {code=-32600, message="Missing port parameter"}
+   else
+      local options = ""
+      if opt.proto=="udp" then
+	 options = options .. " -u"
+      end
+      options = options .. " -s"
+      options = options .. check_param(opt.port, "-p")
+      options = options .. "-y C -i 1"
+      local cmd = "iperf" .. options 
+      local pid = luci.util.exec("sh /usr/bin/bismark-command \"" .. cmd .. "\" \"/tmp/iperfserver" .. opt.port .. ".temp\"")
+      return formatres(pid,cmd) 
+   end
+end
 
+-- stop iperf server
+function active.iperfs_stop(opt)
+   if not opt or not opt.pid or not opt.port then
+      return nil, {code=-32600, message="Missing pid or port parameter"}
+   else
+      -- send SIGTERM to iperf server process
+      luci.sys.process.signal(opt.pid, 15)
 
---function active.udpbandwidth(host, direction)
---    -- invoke shaperprobe server if direction = up and client if direction = dw
---    return luci.util.exec("nc '"..host:gsub("'", '').."'")
---end
+      -- get the temp output file
+      local resfile = "/tmp/iperfserver" .. opt.port .. ".temp" 
+      if fs.access(resfile) then
+	 local report = io.lines(resfile)
+	 luci.util.exec("rm -f " .. resfile)
+	 return formatres(report,"iperf -s") 
+      else
+	 return nil, {code=-32700, message="Bandwidth report doesn't exist"}
+      end
+   end
+end
+
 
 ----------------------------------------------------------------------------------------------
 --- TCP BANDWIDTH TEST
