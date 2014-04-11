@@ -86,12 +86,13 @@ function active.ping(host, count)
    end
 end
 
-function active.fping(host, count, interval)
+--function active.fping(host, count, interval)
+function active.fping(host, opt)
    if not host then
       return nil, {code=-32602, message="Missing destination"}
    else
-      local cmd = "fping" .. check_param(count, "-C") .. check_param(interval, "-p") .. "'"..host:gsub("'", '').."'"
-      local rawdata luci.util.exec(cmd)
+      local cmd = "fping" .. check_param(opt.count, "-C") .. check_param(opt.interval, "-p") .. "'"..host:gsub("'", '').."'"
+      local rawdata = luci.util.exec(cmd)
       return formatres(rawdata,cmd)
    end
 end
@@ -120,6 +121,7 @@ function active.ipaddr()
    return formatres(luci.util.exec(cmd),cmd)
 end
 
+-- deprc
 -- from net.arptable in sys.lua
 function active.arptable(callback)
     local arp, e, r, v
@@ -151,6 +153,34 @@ function active.arptable(callback)
         end
     end
     return arp
+end
+
+--[[
+    TRACEROUTES
+]]--
+
+function active.paristraceroute(ip_addr, count, proto)
+   if not ip_addr then
+      return nil, {code=-32600, message="Missing destination"}
+   else
+      local cmd = "paris-traceroute " .. check_param(count, "-q") .. check_param(proto, "-p") .. ip_addr
+      local ret = luci.util.exec(cmd)
+      return formatres(ret,cmd)
+   end
+end
+
+function active.mtr(ip_addr, options)
+   if not ip_addr then
+      return nil, {code=-32600, message="Missing destination"}
+   else      
+      local options = " --raw" .. check_param(options.count, "-c") .. check_param(options.size, "-s") .. check_param(options.interval, "-i")
+      if (proto == 'udp') then
+	 options = options .. " -u "
+      end
+      local cmd = "mtr"..options..ip_addr
+      local ret = luci.util.exec(cmd)
+      return formatres(ret,cmd)
+   end
 end
 
 
@@ -206,6 +236,7 @@ function active.iwstationdump()
     return formatres(station_dump,"iw dev <dev> station dump")
 end
 
+-- deprc ?
 function active._wireless_interface()
     local wireless_dev = luci.util.exec("iw dev | grep 'Interface'")
     
@@ -225,7 +256,7 @@ function active._wireless_interface()
     return Interface
 end
 
-
+-- deprc ?
 function active.interface(dev)
     
     local Interface = active._wireless_interface()
@@ -241,6 +272,33 @@ end
 --[[
     BANDWIDTH TESTS
 ]]--
+
+-- Anna: simplified iperf client interface
+function active.iperf(opt)
+   if not opt or not opt.client then
+      return nil, {code=-32600, message="Missing destination"}
+   else
+      local options = ""
+      if opt.proto=="udp" then
+	 options = options .. " -u"
+      end
+      options = options .. check_param(opt.client, "-c")
+      options = options .. check_param(opt.port, "-p")
+      options = options .. check_param(opt.bandwidth, "-b")
+      options = options .. check_param(opt.num, "-n")
+      options = options .. check_param(opt.len, "-l")
+      options = options .. check_param(opt.time, "-t")
+      if opt.tradeoff == true then
+	 options = options .. "-r"
+      end
+      options = options .. "-y C -i 1"
+      local cmd = "iperf" .. options    
+      local result = luci.util.exec(cmd)
+      return formatres(result,cmd) 
+   end
+end
+
+
 
 --function active.udpbandwidth(host, direction)
 --    -- invoke shaperprobe server if direction = up and client if direction = dw
@@ -397,33 +455,6 @@ function active.readshaperprobe()
     else
         return -1
     end
-end
-
---[[
-    PARIS TRACEROUTE
-]]--
-function active.paristraceroute(ip_addr, count, proto)
-   if not ip_addr then
-      return nil, {code=-32600, message="Missing destination"}
-   else
-      local cmd = "paris-traceroute " .. check_param(count, "-q") .. check_param(proto, "-p") .. ip_addr
-      local ret = luci.util.exec(cmd)
-      return formatres(ret,cmd)
-   end
-end
-
-function active.mtr(ip_addr, count, size, interval, proto)
-   if not ip_addr then
-      return nil, {code=-32600, message="Missing destination"}
-   else      
-      local options = " --raw" .. check_param(count, "-c") .. check_param(size, "-s") .. check_param(interval, "-i")
-      if (proto == 'udp') then
-	 options = options .. " -u "
-      end
-      local cmd = "mtr"..options..ip_addr
-      local ret = luci.util.exec(cmd)
-      return formatres(ret,cmd)
-   end
 end
 
 

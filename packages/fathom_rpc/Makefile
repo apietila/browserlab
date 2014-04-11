@@ -19,8 +19,8 @@ define Package/fathom_rpc
   CATEGORY:=Utilities
   DEFAULT:=n
   TITLE:=Gateway luci RPC-JSON module for Fathom home network troubleshooting
-  URL:=http://github.com/shahifaqeer/browserlab
-  DEPENDS:=+luci-mod-rpc +luci-lib-json +avahi-daemon
+  URL:=http://github.com/apietila/browserlab.git
+  DEPENDS:=+luci-mod-rpc +luci-lib-json +avahi-daemon +fping +mtr
 endef
 
 define Package/fathom_rpc/description
