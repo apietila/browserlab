@@ -1,0 +1,10 @@
+--- a/src/Makefile.am	2014-03-19 15:59:56.706122170 +0100
++++ b/src/Makefile.am	2014-06-12 13:41:31.317280524 +0200
+@@ -1,6 +1,6 @@
+ lib_LTLIBRARIES         = libiperf.la                                   # Build and install an iperf library
+ bin_PROGRAMS            = iperf3                                        # Build and install an iperf binary
+-noinst_PROGRAMS         = t_timer t_units t_uuid iperf3_profile         # Build, but don't install the test programs and a profiled version of iperf3
++noinst_PROGRAMS         = t_timer t_units t_uuid         # Build, but don't install the test programs and a profiled version of iperf3
+ include_HEADERS         = iperf_api.h # Defines the headers that get installed with the program
+ 
+ 
