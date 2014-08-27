@@ -64,7 +64,7 @@ endef
 define Package/node/install
 	mkdir -p $(1)/usr/bin
 	$(CP) $(PKG_BUILD_DIR)/out/Release/node $(1)/usr/bin/
-	ln -s /usr/bin/node $(1)/usr/bin/nodejs
+	ln -s /usr/bin/node $(1)/usr/bin/node
 endef
 
 $(eval $(call BuildPackage,node))
