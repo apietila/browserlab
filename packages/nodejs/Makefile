@@ -38,11 +38,11 @@ endef
 
 define Build/Prepare
 	$(call Build/Prepare/Default)
-	$(CP) patches/001-link-settings.patch $(PKG_BUILD_DIR)/
+	$(CP) link-settings.patch $(PKG_BUILD_DIR)/
 	(cd $(PKG_BUILD_DIR); \
 	rm -rf deps/v8; \
 	git clone $(GIT_SOURCE) deps/v8; \
-	patch -p1 < 001-link-settings.patch; \
+	patch -p1 < link-settings.patch; \
 	);
 endef
 
