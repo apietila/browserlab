@@ -1,5 +1,4 @@
 diff --git a/deps/uv/uv.gyp b/deps/uv/uv.gyp
-index 7cd0f7d..2b56dc1 100644
 --- a/deps/uv/uv.gyp
 +++ b/deps/uv/uv.gyp
 @@ -209,7 +209,7 @@
