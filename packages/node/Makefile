@@ -16,10 +16,10 @@ PKG_RELEASE:=3
 PKG_SOURCE:=node-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=http://nodejs.org/dist/${PKG_VERSION}
 PKG_MD5SUM:=1b65fe749f8e542a56a71af2b8c3a74a
-#GIT_SOURCE:=https://github.com/brimstone/v8m-rb
-GIT_SOURCE:=https://github.com/paul99/v8m-rb.git
+GIT_SOURCE:=https://github.com/apietila/v8m-rb.git
 
 GYP_DEFINES:=v8_use_mips_abi_hardfloat=false v8_can_use_fpu_instructions=false
+
 LIBS:=-I$(TOOLCHAIN_DIR)/mips-openwrt-linux-uclibc/include/c++/4.6.3/ -I$(TOOLCHAIN_DIR)/mips-openwrt-linux-uclibc/include/c++/4.6.3/mips-openwrt-linux-uclibc/
 
 include $(INCLUDE_DIR)/package.mk
@@ -42,6 +42,7 @@ define Build/Prepare
 	(cd $(PKG_BUILD_DIR); \
 	rm -rf deps/v8; \
 	git clone $(GIT_SOURCE) deps/v8; \
+	cd deps/v8; make dependencies; cd ../..; \
 	patch -p1 < link-settings.patch; \
 	);
 endef
