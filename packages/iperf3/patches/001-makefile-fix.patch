@@ -1,20 +1,20 @@
---- a/src/Makefile.am	2014-06-12 14:10:48.761279058 +0200
-+++ b/src/Makefile.am	2014-06-12 14:12:09.345278991 +0200
+--- a/src/Makefile.am
++++ b/src/Makefile.am
 @@ -1,6 +1,6 @@
- lib_LIBRARIES           = libiperf.a                                    # Build and install a static iperf library
+ lib_LTLIBRARIES         = libiperf.la                                   # Build and install an iperf library
  bin_PROGRAMS            = iperf3                                        # Build and install an iperf binary
 -noinst_PROGRAMS         = t_timer t_units t_uuid iperf3_profile         # Build, but don't install the test programs and a profiled version of iperf3
-+noinst_PROGRAMS         = t_timer t_units t_uuid         # Build, but don't install the test programs and a profiled version of iperf3
++noinst_PROGRAMS         = t_timer t_units t_uuid                        # Build, but don't install the test programs and a profiled version of iperf3
  include_HEADERS         = iperf_api.h # Defines the headers that get installed with the program
  
  
-@@ -45,9 +45,9 @@ iperf3_LDFLAGS          = -g
+@@ -46,9 +46,9 @@ iperf3_LDFLAGS          = -g
  iperf3_profile_SOURCES  = main.c \
- 						  $(libiperf_a_SOURCES)
+ 						  $(libiperf_la_SOURCES)
  
--iperf3_profile_CFLAGS   = -pg -g -Wall
-+iperf3_profile_CFLAGS   = -g -Wall
- iperf3_profile_LDADD    = libiperf.a
+-iperf3_profile_CFLAGS   = -pg -g
++iperf3_profile_CFLAGS   = -g
+ iperf3_profile_LDADD    = libiperf.la
 -iperf3_profile_LDFLAGS  = -pg -g
 +iperf3_profile_LDFLAGS  = -g
  
