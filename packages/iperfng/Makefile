@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2007-2010 OpenWrt.org (original iperf)
-# Copyright (C) 2014 Inria Paris-Roquencourt (iperfng)
+# Copyright (C) 2014 Anna-Kaisa Pietilainen <anna-kaisa.pietilainen@inria.fr>
 #
 # This is free software, licensed under the GNU General Public License v2.
 # See /LICENSE for more information.
@@ -9,6 +9,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=iperfng
 PKG_VERSION:=2.0.6
+PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=git://github.com/apietila/iperf-ng.git

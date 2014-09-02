@@ -20,9 +20,6 @@ PKG_BUILD_DIR:=$(BUILD_DIR)/iperf-$(PKG_VERSION)
 
 PKG_FIXUP:=autoreconf
 
-#EXTRA_LDFLAGS:=-nodefaultlibs -luClibc++
-#EXTRA_CFLAGS:=-I$(STAGING_DIR)/usr/include/uClibc++
-
 include $(INCLUDE_DIR)/uclibc++.mk
 include $(INCLUDE_DIR)/package.mk
 
@@ -30,7 +27,7 @@ define Package/iperf3
 	SECTION:=net
 	CATEGORY:=Network
 	TITLE:=Iperf3
-	DEPENDS:=+libpthread +uclibcxx
+	DEPENDS:=+libpthread $(CXX_DEPENDS)
 	URL:=http://software.es.net/iperf/
 endef
 
